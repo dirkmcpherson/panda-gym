@@ -6,17 +6,19 @@ from panda_gym.envs.core import Task
 from panda_gym.utils import distance
 
 
-class Push(Task):
+class PushModified(Task):
     def __init__(
         self,
         sim,
         reward_type="sparse",
-        distance_threshold=0.05,
+        distance_threshold=0.40, # giant distance threshold
         goal_xy_range=0.3,
         obj_xy_range=0.3,
     ) -> None:
         super().__init__(sim)
+        print(f"Using modified environment.")
         self.reward_type = reward_type
+        print("Reward type is: ", self.reward_type)
         self.distance_threshold = distance_threshold
         self.object_size = 0.04
         self.goal_range_low = np.array([-goal_xy_range / 2, -goal_xy_range / 2, 0])
@@ -74,20 +76,28 @@ class Push(Task):
 
     def _sample_goal(self) -> np.ndarray:
         """Randomize goal."""
-        goal = np.array([0.0, 0.0, self.object_size / 2])  # z offset for the cube center
-        noise = self.np_random.uniform(self.goal_range_low, self.goal_range_high)
-        goal += noise
+        goal = np.array([-0.1, 0.39,-0.38])  # z offset for the cube center
+        # goal = np.array([0, 0,self.object_size / 2])  # z offset for the cube center
+        # noise = self.np_random.uniform(self.goal_range_low, self.goal_range_high)
+        # goal += noise
         return goal
 
     def _sample_object(self) -> np.ndarray:
         """Randomize start position of object."""
+        # object_position = np.array([0.0, 0.0, self.object_size / 2])
+        # noise = self.np_random.uniform(self.obj_range_low, self.obj_range_high)
+        # object_position += noise
+
         object_position = np.array([0.0, 0.0, self.object_size / 2])
+        # object_position = np.array([-0.05, 0.15, self.object_size / 2])
         noise = self.np_random.uniform(self.obj_range_low, self.obj_range_high)
         object_position += noise
+
         return object_position
 
     def is_success(self, achieved_goal: np.ndarray, desired_goal: np.ndarray) -> Union[np.ndarray, float]:
         d = distance(achieved_goal, desired_goal)
+        if d < self.distance_threshold: print(F"Distance {d:1.1f}")
         return np.array(d < self.distance_threshold, dtype=np.float64)
 
     def compute_reward(self, achieved_goal, desired_goal, info: Dict[str, Any]) -> Union[np.ndarray, float]:
